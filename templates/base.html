@@ -77,15 +77,20 @@
                 <ul>
                     <li><a href="{{ url_for('main.index') }}">Home</a></li>
                     
-                    <!-- Categories -->
-                    <li class="dropdown">
-                        <a href="#">Categories <i class="fas fa-chevron-down"></i></a>
-                        <ul class="dropdown-menu">
-                            {% for category in categories %}
-                                <li><a href="{{ url_for('main.category', slug=category.slug) }}">{{ category.name }}</a></li>
-                            {% endfor %}
-                        </ul>
-                    </li>
+                    <!-- Categories - Simplified horizontal list -->
+                    {% for category in categories[:5] %}
+                        <li><a href="{{ url_for('main.category', slug=category.slug) }}">{{ category.name }}</a></li>
+                    {% endfor %}
+                    {% if categories|length > 5 %}
+                        <li class="dropdown">
+                            <a href="#">More <i class="fas fa-chevron-down"></i></a>
+                            <ul class="dropdown-menu">
+                                {% for category in categories[5:] %}
+                                    <li><a href="{{ url_for('main.category', slug=category.slug) }}">{{ category.name }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                    {% endif %}
                     
                     <!-- User Menu -->
                     {% if current_user.is_authenticated %}
@@ -214,6 +219,7 @@
     
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/theme-switcher.js') }}"></script>
     
     <!-- Theme colors for JS -->
     <script>

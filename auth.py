@@ -41,7 +41,21 @@ def login():
         else:
             flash('Invalid email or password.', 'error')
     
-    return render_template('auth/login.html', form=form)
+    # Import required data for template
+    from models import SiteSettings, Category, Article
+    from forms import SearchForm
+    
+    settings = SiteSettings.get_all()
+    search_form = SearchForm()
+    categories = Category.get_all()
+    
+    return render_template('auth/login.html', 
+                          form=form,
+                          settings=settings,
+                          Category=Category,
+                          Article=Article,
+                          search_form=search_form,
+                          categories=categories)
 
 @auth.route('/logout')
 @login_required
@@ -66,7 +80,22 @@ def register():
         existing_user = User.get_by_email(email)
         if existing_user:
             flash('Email is already registered.', 'error')
-            return render_template('auth/register.html', form=form)
+            
+            # Import required data for template
+            from models import SiteSettings, Category, Article
+            from forms import SearchForm
+            
+            settings = SiteSettings.get_all()
+            search_form = SearchForm()
+            categories = Category.get_all()
+            
+            return render_template('auth/register.html', 
+                                  form=form,
+                                  settings=settings,
+                                  Category=Category,
+                                  Article=Article,
+                                  search_form=search_form,
+                                  categories=categories)
         
         # Create new user (default role is author)
         user = User(
@@ -80,7 +109,21 @@ def register():
         flash('Registration successful! You can now log in.', 'success')
         return redirect(url_for('auth.login'))
     
-    return render_template('auth/register.html', form=form)
+    # Import required data for template
+    from models import SiteSettings, Category, Article
+    from forms import SearchForm
+    
+    settings = SiteSettings.get_all()
+    search_form = SearchForm()
+    categories = Category.get_all()
+    
+    return render_template('auth/register.html', 
+                          form=form,
+                          settings=settings,
+                          Category=Category,
+                          Article=Article,
+                          search_form=search_form,
+                          categories=categories)
 
 @auth.route('/profile')
 @login_required
