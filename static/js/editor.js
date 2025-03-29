@@ -1,78 +1,37 @@
-// TinyMCE integration for article editor
+// Summernote integration for article editor
 document.addEventListener('DOMContentLoaded', function() {
-  // Initialize TinyMCE if the content editor exists
+  // Initialize Summernote if the content editor exists
   if (document.querySelector('#content')) {
-    tinymce.init({
-      selector: '#content',
-      plugins: [
-        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-        'insertdatetime', 'media', 'table', 'help', 'wordcount'
-      ],
-      toolbar: 'undo redo | blocks | ' +
-        'bold italic backcolor | alignleft aligncenter ' +
-        'alignright alignjustify | bullist numlist outdent indent | ' +
-        'removeformat | help',
-      menubar: 'file edit view insert format tools table help',
-      content_style: `
-        body {
-          font-family: 'Source Sans Pro', system-ui, -apple-system, sans-serif;
-          font-size: 16px;
-          line-height: 1.6;
-          padding: 20px;
-        }
-        h1, h2, h3, h4, h5, h6 {
-          font-family: 'Merriweather', Georgia, serif;
-          font-weight: 700;
-          line-height: 1.3;
-          margin-bottom: 16px;
-        }
-        p { margin-bottom: 16px; }
-        img { max-width: 100%; height: auto; }
-      `,
+    $('#content').summernote({
       height: 500,
-      image_caption: true,
-      image_advtab: true,
-      file_picker_callback: function(callback, value, meta) {
-        // Provide image and file selection capability
-        if (meta.filetype === 'image') {
-          var input = document.createElement('input');
-          input.setAttribute('type', 'file');
-          input.setAttribute('accept', 'image/*');
-          
-          input.onchange = function() {
-            var file = this.files[0];
-            
-            // Create a notification to show upload progress
-            const notification = document.createElement('div');
-            notification.className = 'tox-notification';
-            notification.innerHTML = '<p>Uploading image...</p>';
-            document.body.appendChild(notification);
-            
-            // You would normally upload the file to your server here
-            // For the sake of this example, we'll simulate a successful upload
-            // In a real application, you would use an AJAX request to upload the file
-            
-            // Show a message once the mock upload "completes"
-            setTimeout(function() {
-              // Remove the notification
-              document.body.removeChild(notification);
-              
-              // In a real application, you would get the URL from the server response
-              // Here we're just showing a message that this is a demo
-              alert('In a real application, this would upload the file to your server and return the URL. Please use the Media Library to upload images.');
-            }, 2000);
-          };
-          
-          input.click();
+      placeholder: 'Write your article content here...',
+      tabsize: 2,
+      toolbar: [
+        ['style', ['style']],
+        ['font', ['bold', 'underline', 'clear']],
+        ['color', ['color']],
+        ['para', ['ul', 'ol', 'paragraph']],
+        ['table', ['table']],
+        ['insert', ['link', 'picture']],
+        ['view', ['fullscreen', 'codeview', 'help']]
+      ],
+      fontNames: ['Source Sans Pro', 'Merriweather', 'Arial', 'Arial Black', 'Comic Sans MS', 'Courier New'],
+      styleTags: [
+        { title: 'Heading 1', tag: 'h1' },
+        { title: 'Heading 2', tag: 'h2' },
+        { title: 'Heading 3', tag: 'h3' },
+        { title: 'Paragraph', tag: 'p' },
+        { title: 'Blockquote', tag: 'blockquote' }
+      ],
+      callbacks: {
+        onChange: function(contents) {
+          // Update the hidden input field with the content
+          $('#content').val(contents);
+        },
+        onImageUpload: function(files) {
+          // Alert the user to use the Media Library instead
+          alert('Please use the Media Library to upload images, then insert them using URLs.');
         }
-      },
-      setup: function(editor) {
-        // Add custom buttons or functionality here
-        editor.on('change', function() {
-          // Trigger change event to ensure form data is updated
-          editor.save();
-        });
       }
     });
   }
