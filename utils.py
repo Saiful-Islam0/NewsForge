@@ -12,7 +12,7 @@ def init_db():
         admin = User(
             username="admin",
             email="admin@example.com",
-            password="adminpassword",
+            password="admin123",
             role="admin"
         )
         admin.save()
