@@ -1,0 +1,341 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ article.meta_title or article.title }} | {{ settings.site_name|default('NewsPublisher') }}{% endblock %}
+
+{% block meta_description %}{{ article.meta_description or article.content|striptags|truncate(160) }}{% endblock %}
+
+{% block meta_tags %}
+<meta property="og:title" content="{{ article.meta_title or article.title }}">
+<meta property="og:description" content="{{ article.meta_description or article.content|striptags|truncate(160) }}">
+<meta property="og:type" content="article">
+<meta property="og:url" content="{{ request.url }}">
+{% if article.featured_image %}
+<meta property="og:image" content="{{ request.url_root|replace('http://', 'https://') }}{{ article.featured_image|lstrip('/') }}">
+{% endif %}
+
+<meta property="article:published_time" content="{{ article.published_at.isoformat() }}">
+<meta property="article:author" content="{{ author.username if author else 'Staff Writer' }}">
+
+{% for tag in article.tags %}
+<meta property="article:tag" content="{{ tag }}">
+{% endfor %}
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ article.meta_title or article.title }}">
+<meta name="twitter:description" content="{{ article.meta_description or article.content|striptags|truncate(160) }}">
+{% if article.featured_image %}
+<meta name="twitter:image" content="{{ request.url_root|replace('http://', 'https://') }}{{ article.featured_image|lstrip('/') }}">
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Article Content -->
+            <article class="article">
+                <header class="article-header">
+                    <!-- Category Link -->
+                    {% if category %}
+                    <div class="article-category">
+                        <a href="{{ url_for('main.category', slug=category.slug) }}">{{ category.name }}</a>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Article Title -->
+                    <h1 class="article-title-large">{{ article.title }}</h1>
+                    
+                    <!-- Article Meta -->
+                    <div class="article-meta-info">
+                        <span class="author">
+                            By {{ author.username if author else 'Staff Writer' }}
+                        </span>
+                        <span class="date">
+                            {{ article.published_at.strftime('%B %d, %Y') }}
+                        </span>
+                        <!-- Article Views - Could be implemented with actual analytics -->
+                        <span class="reading-time">
+                            {{ (article.content|striptags|length / 1000)|round|int + 1 }} min read
+                        </span>
+                    </div>
+                </header>
+                
+                <!-- Featured Image -->
+                {% if article.featured_image %}
+                <div class="article-featured-image">
+                    <img src="{{ article.featured_image }}" alt="{{ article.title }}">
+                </div>
+                {% endif %}
+                
+                <!-- Article Body -->
+                <div class="article-content">
+                    {{ article.content|safe }}
+                </div>
+                
+                <!-- Article Tags -->
+                {% if article.tags %}
+                <div class="article-tags">
+                    {% for tag in article.tags %}
+                    <a href="{{ url_for('main.tag', tag=tag) }}" class="tag">{{ tag }}</a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <!-- Author Bio -->
+                {% if author %}
+                <div class="author-bio">
+                    <div class="author-avatar">
+                        <!-- If you have author avatars, display them here -->
+                        <img src="https://ui-avatars.com/api/?name={{ author.username|urlencode }}&background=random" alt="{{ author.username }}">
+                    </div>
+                    <div class="author-info">
+                        <h4 class="author-name">{{ author.username }}</h4>
+                        <div class="author-description">
+                            <!-- You could add author bio field to the User model -->
+                            Staff writer at {{ settings.site_name|default('NewsPublisher') }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Social Sharing -->
+                <div class="social-sharing">
+                    <h4>Share This Article</h4>
+                    <div class="share-buttons">
+                        <button class="share-button facebook" data-platform="facebook">
+                            <i class="fab fa-facebook-f"></i> Facebook
+                        </button>
+                        <button class="share-button twitter" data-platform="twitter">
+                            <i class="fab fa-twitter"></i> Twitter
+                        </button>
+                        <button class="share-button linkedin" data-platform="linkedin">
+                            <i class="fab fa-linkedin-in"></i> LinkedIn
+                        </button>
+                        <button class="share-button" data-platform="email">
+                            <i class="fas fa-envelope"></i> Email
+                        </button>
+                    </div>
+                </div>
+            </article>
+            
+            <!-- Comments Section -->
+            {% if comments_enabled %}
+            <section class="comments-section">
+                <div class="comments-header">
+                    <h3>Comments ({{ comments|length }})</h3>
+                </div>
+                
+                <!-- Comment Form -->
+                <div class="comment-form">
+                    <form action="{{ url_for('main.post_comment', slug=article.slug) }}" method="post">
+                        {{ comment_form.csrf_token }}
+                        <div class="form-group mb-3">
+                            <label for="author_name">Name</label>
+                            {{ comment_form.author_name(class="form-control", placeholder="Your Name") }}
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="author_email">Email</label>
+                            {{ comment_form.author_email(class="form-control", placeholder="Your Email") }}
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="content">Comment</label>
+                            {{ comment_form.content(class="form-control", placeholder="Your Comment", rows=5) }}
+                        </div>
+                        {{ comment_form.parent_id() }}
+                        <button type="submit" class="btn btn-accent">Post Comment</button>
+                    </form>
+                </div>
+                
+                <!-- Comments List -->
+                <div class="comments-list">
+                    {% if comments %}
+                        {% for comment in comments %}
+                            <div class="comment" id="comment-{{ comment.id }}">
+                                <div class="comment-header">
+                                    <div class="comment-author">{{ comment.author_name }}</div>
+                                    <div class="comment-date">{{ comment.created_at.strftime('%B %d, %Y at %H:%M') }}</div>
+                                </div>
+                                <div class="comment-content">
+                                    {{ comment.content }}
+                                </div>
+                                <div class="comment-actions">
+                                    <a href="#" class="comment-reply-link" data-comment-id="{{ comment.id }}">
+                                        <i class="fas fa-reply"></i> Reply
+                                    </a>
+                                </div>
+                                
+                                <!-- Reply Form (hidden initially) -->
+                                <div class="reply-form" data-parent-id="{{ comment.id }}">
+                                    <form action="{{ url_for('main.post_comment', slug=article.slug) }}" method="post">
+                                        {{ comment_form.csrf_token }}
+                                        <div class="form-group mb-3">
+                                            <label for="author_name">Name</label>
+                                            {{ comment_form.author_name(class="form-control", placeholder="Your Name") }}
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label for="author_email">Email</label>
+                                            {{ comment_form.author_email(class="form-control", placeholder="Your Email") }}
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label for="content">Reply</label>
+                                            {{ comment_form.content(class="form-control", placeholder="Your Reply", rows=3) }}
+                                        </div>
+                                        <input type="hidden" name="parent_id" value="{{ comment.id }}">
+                                        <button type="submit" class="btn btn-accent">Post Reply</button>
+                                        <button type="button" class="btn btn-outline-secondary cancel-reply">Cancel</button>
+                                    </form>
+                                </div>
+                                
+                                <!-- Child Comments (Replies) -->
+                                {% set child_comments = Comment.get_by_article_id(article.id, True)|selectattr('parent_id', 'equalto', comment.id)|list %}
+                                {% if child_comments %}
+                                    {% for reply in child_comments %}
+                                        <div class="comment comment-reply">
+                                            <div class="comment-header">
+                                                <div class="comment-author">{{ reply.author_name }}</div>
+                                                <div class="comment-date">{{ reply.created_at.strftime('%B %d, %Y at %H:%M') }}</div>
+                                            </div>
+                                            <div class="comment-content">
+                                                {{ reply.content }}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-comments">
+                            <p>No comments yet. Be the first to share your thoughts!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </section>
+            {% endif %}
+            
+            <!-- Related Articles -->
+            {% if related_articles %}
+            <section class="related-articles">
+                <h3>Related Articles</h3>
+                <div class="related-grid">
+                    {% for related in related_articles %}
+                    <div class="article-card">
+                        <div class="article-image">
+                            <a href="{{ url_for('main.article', slug=related.slug) }}">
+                                <img src="{{ related.featured_image or url_for('static', filename='images/placeholder.svg') }}" alt="{{ related.title }}">
+                            </a>
+                        </div>
+                        <div class="article-content">
+                            <h4 class="article-title">
+                                <a href="{{ url_for('main.article', slug=related.slug) }}">{{ related.title }}</a>
+                            </h4>
+                            <div class="article-meta">
+                                <span class="article-date">{{ related.published_at.strftime('%b %d, %Y') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="sidebar">
+                <!-- Categories Section -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Categories</h3>
+                    <ul class="sidebar-categories">
+                        {% for cat in categories %}
+                        <li>
+                            <a href="{{ url_for('main.category', slug=cat.slug) }}">
+                                {{ cat.name }}
+                                <span class="category-count">
+                                    {{ Article.get_all(status='published', category_id=cat.id)|length }}
+                                </span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                
+                <!-- Popular Articles Section -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Popular Articles</h3>
+                    <ul class="popular-posts">
+                        {% for popular in Article.get_all(status='published', limit=5) %}
+                        {% if popular.id != article.id %}
+                        <li class="popular-post">
+                            <div class="popular-post-image">
+                                <a href="{{ url_for('main.article', slug=popular.slug) }}">
+                                    <img src="{{ popular.featured_image or url_for('static', filename='images/placeholder.svg') }}" alt="{{ popular.title }}">
+                                </a>
+                            </div>
+                            <div class="popular-post-content">
+                                <h4 class="popular-post-title">
+                                    <a href="{{ url_for('main.article', slug=popular.slug) }}">{{ popular.title }}</a>
+                                </h4>
+                                <span class="popular-post-date">{{ popular.published_at.strftime('%b %d, %Y') }}</span>
+                            </div>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                
+                <!-- Tags Cloud -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Tags</h3>
+                    <div class="tags-cloud">
+                        {% set all_tags = [] %}
+                        {% for a in Article.get_all(status='published', limit=20) %}
+                            {% for tag in a.tags %}
+                                {% if tag not in all_tags %}
+                                    {% do all_tags.append(tag) %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                        
+                        {% for tag in all_tags %}
+                            <a href="{{ url_for('main.tag', tag=tag) }}" class="tag">{{ tag }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Handle reply form toggling
+    document.addEventListener('DOMContentLoaded', function() {
+        const replyLinks = document.querySelectorAll('.comment-reply-link');
+        const cancelButtons = document.querySelectorAll('.cancel-reply');
+        
+        replyLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const commentId = this.getAttribute('data-comment-id');
+                const replyForm = document.querySelector(`.reply-form[data-parent-id="${commentId}"]`);
+                
+                // Hide any visible forms
+                document.querySelectorAll('.reply-form').forEach(form => {
+                    form.style.display = 'none';
+                });
+                
+                // Show this form
+                replyForm.style.display = 'block';
+            });
+        });
+        
+        cancelButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const form = this.closest('.reply-form');
+                form.style.display = 'none';
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,237 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Dashboard | Admin | {{ settings.site_name|default('NewsPublisher') }}{% endblock %}
+
+{% block admin_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <!-- Stats Overview -->
+    <div class="admin-stats">
+        <div class="stat-card">
+            <div class="stat-value">{{ article_count }}</div>
+            <div class="stat-label">Total Articles</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-value">{{ published_count }}</div>
+            <div class="stat-label">Published</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-value">{{ draft_count }}</div>
+            <div class="stat-label">Drafts</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-value">{{ pending_comments|length }}</div>
+            <div class="stat-label">Pending Comments</div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <!-- Latest Articles -->
+        <div class="col-lg-8">
+            <div class="admin-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="admin-card-title">Latest Articles</h3>
+                    <a href="{{ url_for('admin.new_article') }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus"></i> New Article
+                    </a>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for article in latest_articles %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('admin.edit_article', id=article.id) }}">
+                                        {{ article.title }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-{{ article.status }}">
+                                        {{ article.status|capitalize }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if article.published_at %}
+                                        {{ article.published_at.strftime('%b %d, %Y') }}
+                                    {% else %}
+                                        {{ article.created_at.strftime('%b %d, %Y') }}
+                                    {% endif %}
+                                </td>
+                                <td class="admin-actions">
+                                    <a href="{{ url_for('admin.edit_article', id=article.id) }}" class="btn btn-sm btn-outline-primary" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    
+                                    {% if article.status == 'published' %}
+                                        <a href="{{ url_for('main.article', slug=article.slug) }}" class="btn btn-sm btn-outline-success" title="View" target="_blank">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    {% endif %}
+                                    
+                                    <form action="{{ url_for('admin.delete_article', id=article.id) }}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger delete-btn" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('admin.articles') }}" class="btn btn-outline-secondary">
+                        View All Articles
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Stats Chart -->
+            <div class="admin-card mt-4">
+                <h3 class="admin-card-title">Statistics</h3>
+                <div style="height: 300px;">
+                    <canvas id="stats-chart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Pending Comments -->
+            {% if current_user.role in ['admin', 'editor'] and pending_comments %}
+            <div class="admin-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="admin-card-title">Pending Comments</h3>
+                    <a href="{{ url_for('admin.comments', status='pending') }}" class="btn btn-sm btn-outline-primary">
+                        View All
+                    </a>
+                </div>
+                
+                <div class="comment-list">
+                    {% for comment in pending_comments[:5] %}
+                    <div class="comment-item">
+                        <div class="comment-header">
+                            <div class="comment-author">{{ comment.author_name }}</div>
+                            <div class="comment-date">{{ comment.created_at.strftime('%b %d, %Y') }}</div>
+                        </div>
+                        <div class="comment-content">{{ comment.content|truncate(100) }}</div>
+                        <div class="comment-article">
+                            On: <strong>
+                                {% set article = Article.get_by_id(comment.article_id) %}
+                                {% if article %}
+                                    <a href="{{ url_for('main.article', slug=article.slug) }}" target="_blank">
+                                        {{ article.title }}
+                                    </a>
+                                {% else %}
+                                    [Article Not Found]
+                                {% endif %}
+                            </strong>
+                        </div>
+                        <div class="comment-actions mt-2">
+                            <form action="{{ url_for('admin.approve_comment', id=comment.id) }}" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                            </form>
+                            <form action="{{ url_for('admin.delete_comment', id=comment.id) }}" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-danger delete-btn">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Quick Actions -->
+            <div class="admin-card mt-4">
+                <h3 class="admin-card-title">Quick Actions</h3>
+                <div class="quick-actions">
+                    <a href="{{ url_for('admin.new_article') }}" class="btn btn-primary w-100 mb-2">
+                        <i class="fas fa-plus"></i> New Article
+                    </a>
+                    
+                    {% if current_user.role in ['admin', 'editor'] %}
+                    <a href="{{ url_for('admin.new_category') }}" class="btn btn-outline-primary w-100 mb-2">
+                        <i class="fas fa-folder-plus"></i> New Category
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('admin.media') }}" class="btn btn-outline-primary w-100 mb-2">
+                        <i class="fas fa-upload"></i> Upload Media
+                    </a>
+                    
+                    {% if current_user.role == 'admin' %}
+                    <a href="{{ url_for('admin.new_user') }}" class="btn btn-outline-primary w-100 mb-2">
+                        <i class="fas fa-user-plus"></i> New User
+                    </a>
+                    
+                    <a href="{{ url_for('admin.settings') }}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-cog"></i> Site Settings
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .comment-item {
+        background-color: var(--white);
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 1rem;
+        border-left: 3px solid var(--accent-color);
+    }
+    
+    .comment-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+    
+    .comment-author {
+        font-weight: 600;
+    }
+    
+    .comment-date {
+        font-size: 0.875rem;
+        color: var(--medium-gray);
+    }
+    
+    .comment-content {
+        margin-bottom: 0.5rem;
+    }
+    
+    .comment-article {
+        font-size: 0.875rem;
+        color: var(--medium-gray);
+    }
+    
+    .quick-actions {
+        display: flex;
+        flex-direction: column;
+    }
+</style>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}

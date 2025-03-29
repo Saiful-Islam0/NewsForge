@@ -1,0 +1,323 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Media Library | Admin | {{ settings.site_name|default('NewsPublisher') }}{% endblock %}
+
+{% block admin_title %}Media Library{% endblock %}
+
+{% block content %}
+<div class="admin-media">
+    <!-- Header Actions -->
+    <div class="d-flex justify-content-between mb-4">
+        <h3>Media Library</h3>
+        
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#uploadMediaModal">
+            <i class="fas fa-upload"></i> Upload Media
+        </button>
+    </div>
+    
+    <!-- Media Grid -->
+    <div class="admin-card">
+        {% if media_files %}
+            <div class="media-grid">
+                {% for media in media_files %}
+                <div class="media-item" data-id="{{ media.id }}" data-url="{{ media.url }}" data-type="{{ 'image' if media.mime_type.startswith('image') else 'file' }}">
+                    <div class="media-preview">
+                        {% if media.mime_type.startswith('image') %}
+                            <img src="{{ media.url }}" alt="{{ media.filename }}">
+                        {% else %}
+                            <div class="file-icon">
+                                <i class="fas fa-file"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="media-info">
+                        <div class="media-filename" title="{{ media.filename }}">{{ media.filename }}</div>
+                        <div class="media-meta">
+                            {{ (media.size / 1024)|round|int }} KB
+                            <span class="media-date">{{ media.created_at.strftime('%b %d, %Y') }}</span>
+                        </div>
+                    </div>
+                    <div class="media-actions">
+                        <button class="btn btn-sm btn-outline-primary copy-url-btn" title="Copy URL" data-url="{{ media.url }}">
+                            <i class="fas fa-link"></i>
+                        </button>
+                        
+                        <form action="{{ url_for('admin.delete_media', id=media.id) }}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-danger delete-btn" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-images fa-3x mb-3 text-muted"></i>
+                <h3>No media files found</h3>
+                <p>You haven't uploaded any media files yet.</p>
+                <button type="button" class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#uploadMediaModal">
+                    <i class="fas fa-upload"></i> Upload Your First Media
+                </button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Upload Media Modal -->
+<div class="modal fade" id="uploadMediaModal" tabindex="-1" aria-labelledby="uploadMediaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadMediaModalLabel">Upload Media</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('admin.upload_media') }}" method="post" enctype="multipart/form-data">
+                    {{ form.csrf_token }}
+                    
+                    <div class="form-group mb-3">
+                        <label for="file">Select File</label>
+                        {{ form.file(class="form-control") }}
+                        <small class="form-text text-muted">Supported formats: JPG, PNG, GIF, SVG. Max size: 16MB.</small>
+                        {% if form.file.errors %}
+                            <div class="form-error">
+                                {% for error in form.file.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Media Details Modal -->
+<div class="modal fade" id="mediaDetailsModal" tabindex="-1" aria-labelledby="mediaDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mediaDetailsModalLabel">Media Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="media-detail-preview text-center mb-3">
+                    <img src="" alt="Media Preview" class="img-fluid media-detail-img">
+                </div>
+                
+                <div class="media-detail-info">
+                    <div class="mb-3">
+                        <label class="fw-bold">Filename:</label>
+                        <div class="media-detail-filename"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="fw-bold">URL:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control media-detail-url" readonly>
+                            <button class="btn btn-outline-secondary copy-detail-url" type="button">Copy</button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="fw-bold">Size:</label>
+                        <div class="media-detail-size"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="fw-bold">Upload Date:</label>
+                        <div class="media-detail-date"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger delete-media-btn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .media-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 20px;
+    }
+    
+    .media-item {
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .media-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .media-preview {
+        height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+        overflow: hidden;
+    }
+    
+    .media-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .file-icon {
+        font-size: 48px;
+        color: #6c757d;
+    }
+    
+    .media-info {
+        padding: 10px;
+    }
+    
+    .media-filename {
+        font-weight: 600;
+        margin-bottom: 5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .media-meta {
+        font-size: 0.8rem;
+        color: #6c757d;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .media-actions {
+        padding: 10px;
+        border-top: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .media-detail-preview {
+        max-height: 300px;
+        overflow: hidden;
+    }
+    
+    .media-detail-img {
+        max-height: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle click on media items to show details
+        const mediaItems = document.querySelectorAll('.media-item');
+        const mediaDetailsModal = new bootstrap.Modal(document.getElementById('mediaDetailsModal'));
+        
+        mediaItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                // Don't open modal if clicking on action buttons
+                if (e.target.closest('.media-actions')) {
+                    return;
+                }
+                
+                const mediaId = this.getAttribute('data-id');
+                const mediaUrl = this.getAttribute('data-url');
+                const mediaType = this.getAttribute('data-type');
+                const mediaFilename = this.querySelector('.media-filename').textContent;
+                const mediaSize = this.querySelector('.media-meta').textContent.trim().split('\n')[0];
+                const mediaDate = this.querySelector('.media-date').textContent;
+                
+                // Populate modal
+                const modalImg = document.querySelector('.media-detail-img');
+                const modalFilename = document.querySelector('.media-detail-filename');
+                const modalUrl = document.querySelector('.media-detail-url');
+                const modalSize = document.querySelector('.media-detail-size');
+                const modalDate = document.querySelector('.media-detail-date');
+                const deleteBtn = document.querySelector('.delete-media-btn');
+                
+                modalImg.src = mediaUrl;
+                modalFilename.textContent = mediaFilename;
+                modalUrl.value = window.location.origin + mediaUrl;
+                modalSize.textContent = mediaSize;
+                modalDate.textContent = mediaDate;
+                
+                // Set up delete button
+                deleteBtn.onclick = function() {
+                    if (confirm('Are you sure you want to delete this media file? This action cannot be undone.')) {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = `/admin/media/delete/${mediaId}`;
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                };
+                
+                // Show modal
+                mediaDetailsModal.show();
+            });
+        });
+        
+        // Copy URL functionality
+        const copyUrlBtns = document.querySelectorAll('.copy-url-btn');
+        copyUrlBtns.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent opening the modal
+                
+                const url = window.location.origin + this.getAttribute('data-url');
+                navigator.clipboard.writeText(url).then(() => {
+                    // Show tooltip or notification
+                    this.setAttribute('title', 'Copied!');
+                    this.classList.add('btn-success');
+                    this.classList.remove('btn-outline-primary');
+                    
+                    // Reset after a moment
+                    setTimeout(() => {
+                        this.setAttribute('title', 'Copy URL');
+                        this.classList.remove('btn-success');
+                        this.classList.add('btn-outline-primary');
+                    }, 1500);
+                });
+            });
+        });
+        
+        // Copy URL from details modal
+        const copyDetailUrlBtn = document.querySelector('.copy-detail-url');
+        if (copyDetailUrlBtn) {
+            copyDetailUrlBtn.addEventListener('click', function() {
+                const urlInput = document.querySelector('.media-detail-url');
+                urlInput.select();
+                navigator.clipboard.writeText(urlInput.value).then(() => {
+                    this.textContent = 'Copied!';
+                    setTimeout(() => {
+                        this.textContent = 'Copy';
+                    }, 1500);
+                });
+            });
+        }
+        
+        // File input preview
+        const fileInput = document.getElementById('file');
+        if (fileInput) {
+            fileInput.addEventListener('change', function() {
+                // You could add preview functionality here if needed
+            });
+        }
+    });
+</script>
+{% endblock %}

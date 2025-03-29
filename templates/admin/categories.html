@@ -1,0 +1,165 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Categories | Admin | {{ settings.site_name|default('NewsPublisher') }}{% endblock %}
+
+{% block admin_title %}Categories Management{% endblock %}
+
+{% block content %}
+<div class="admin-categories">
+    <!-- Header Actions -->
+    <div class="d-flex justify-content-between mb-4">
+        <h3>Manage Content Categories</h3>
+        
+        <a href="{{ url_for('admin.new_category') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> New Category
+        </a>
+    </div>
+    
+    <!-- Categories Table -->
+    <div class="admin-card">
+        {% if categories %}
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Slug</th>
+                            <th>Description</th>
+                            <th>Parent</th>
+                            <th>Articles</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category in categories %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('admin.edit_category', id=category.id) }}">
+                                    {{ category.name }}
+                                </a>
+                            </td>
+                            <td>{{ category.slug }}</td>
+                            <td>{{ category.description|truncate(50) if category.description else '-' }}</td>
+                            <td>
+                                {% if category.parent_id %}
+                                    {% set parent = Category.get_by_id(category.parent_id) %}
+                                    {{ parent.name if parent else '-' }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% set article_count = Article.get_all(category_id=category.id)|length %}
+                                {{ article_count }}
+                            </td>
+                            <td class="admin-actions">
+                                <a href="{{ url_for('admin.edit_category', id=category.id) }}" class="btn btn-sm btn-outline-primary" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                
+                                <a href="{{ url_for('main.category', slug=category.slug) }}" class="btn btn-sm btn-outline-success" title="View" target="_blank">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                
+                                <form action="{{ url_for('admin.delete_category', id=category.id) }}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger delete-btn" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-folder fa-3x mb-3 text-muted"></i>
+                <h3>No categories found</h3>
+                <p>You haven't created any categories yet.</p>
+                <a href="{{ url_for('admin.new_category') }}" class="btn btn-primary mt-3">
+                    <i class="fas fa-plus"></i> Create Your First Category
+                </a>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Category Hierarchy -->
+    {% if categories %}
+    <div class="admin-card mt-4">
+        <h3 class="admin-card-title">Category Hierarchy</h3>
+        
+        <div class="category-tree">
+            <ul class="tree-list">
+                {% for category in categories if not category.parent_id %}
+                <li class="tree-item">
+                    <div class="tree-item-content">
+                        <i class="fas fa-folder"></i>
+                        <a href="{{ url_for('admin.edit_category', id=category.id) }}">{{ category.name }}</a>
+                    </div>
+                    
+                    {% set children = categories|selectattr('parent_id', 'equalto', category.id)|list %}
+                    {% if children %}
+                    <ul class="tree-sublist">
+                        {% for child in children %}
+                        <li class="tree-subitem">
+                            <div class="tree-item-content">
+                                <i class="fas fa-folder"></i>
+                                <a href="{{ url_for('admin.edit_category', id=child.id) }}">{{ child.name }}</a>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .tree-list {
+        list-style: none;
+        padding-left: 0;
+    }
+    
+    .tree-sublist {
+        list-style: none;
+        padding-left: 30px;
+    }
+    
+    .tree-item, .tree-subitem {
+        margin-bottom: 10px;
+    }
+    
+    .tree-item-content {
+        display: flex;
+        align-items: center;
+        padding: 8px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+    }
+    
+    .tree-item-content:hover {
+        background-color: #e9ecef;
+    }
+    
+    .tree-item-content i {
+        margin-right: 10px;
+        color: #6c757d;
+    }
+    
+    .tree-item-content a {
+        color: var(--text-color);
+        text-decoration: none;
+    }
+    
+    .tree-item-content a:hover {
+        color: var(--accent-color);
+    }
+</style>
+{% endblock %}

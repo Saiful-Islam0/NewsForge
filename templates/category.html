@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ category.name }} | {{ settings.site_name|default('NewsPublisher') }}{% endblock %}
+
+{% block meta_description %}{{ category.description or 'Browse all articles in the ' + category.name + ' category' }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Category Header -->
+            <header class="category-header">
+                <h1 class="category-title">{{ category.name }}</h1>
+                {% if category.description %}
+                <div class="category-description">
+                    {{ category.description }}
+                </div>
+                {% endif %}
+            </header>
+            
+            <!-- Articles List -->
+            {% if articles %}
+                <div class="articles-list">
+                    {% for article in articles %}
+                    <div class="list-article">
+                        <div class="list-article-image">
+                            <a href="{{ url_for('main.article', slug=article.slug) }}">
+                                <img src="{{ article.featured_image or url_for('static', filename='images/placeholder.svg') }}" alt="{{ article.title }}">
+                            </a>
+                        </div>
+                        <div class="list-article-content">
+                            <div class="article-meta">
+                                <span class="article-date">{{ article.published_at.strftime('%B %d, %Y') }}</span>
+                            </div>
+                            <h3 class="list-article-title">
+                                <a href="{{ url_for('main.article', slug=article.slug) }}">{{ article.title }}</a>
+                            </h3>
+                            <div class="article-excerpt">
+                                {{ article.content|striptags|truncate(200) }}
+                            </div>
+                            <a href="{{ url_for('main.article', slug=article.slug) }}" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if total_pages > 1 %}
+                <div class="pagination">
+                    {% if page > 1 %}
+                    <a href="{{ url_for('main.category', slug=category.slug, page=page-1) }}">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </a>
+                    {% else %}
+                    <span class="disabled"><i class="fas fa-chevron-left"></i> Previous</span>
+                    {% endif %}
+                    
+                    {% for p in range(1, total_pages + 1) %}
+                    {% if p == page %}
+                    <span class="active">{{ p }}</span>
+                    {% else %}
+                    <a href="{{ url_for('main.category', slug=category.slug, page=p) }}">{{ p }}</a>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if page < total_pages %}
+                    <a href="{{ url_for('main.category', slug=category.slug, page=page+1) }}">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </a>
+                    {% else %}
+                    <span class="disabled">Next <i class="fas fa-chevron-right"></i></span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="no-articles">
+                    <p>No articles found in this category.</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="sidebar">
+                <!-- Categories Section -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Categories</h3>
+                    <ul class="sidebar-categories">
+                        {% for cat in categories %}
+                        <li {% if cat.id == category.id %}class="active"{% endif %}>
+                            <a href="{{ url_for('main.category', slug=cat.slug) }}">
+                                {{ cat.name }}
+                                <span class="category-count">
+                                    {{ Article.get_all(status='published', category_id=cat.id)|length }}
+                                </span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                
+                <!-- Child Categories (if any) -->
+                {% set child_categories = Category.get_all(parent_id=category.id) %}
+                {% if child_categories %}
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">{{ category.name }} Subcategories</h3>
+                    <ul class="sidebar-categories">
+                        {% for child in child_categories %}
+                        <li>
+                            <a href="{{ url_for('main.category', slug=child.slug) }}">
+                                {{ child.name }}
+                                <span class="category-count">
+                                    {{ Article.get_all(status='published', category_id=child.id)|length }}
+                                </span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <!-- Popular Articles Section -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Popular in {{ category.name }}</h3>
+                    <ul class="popular-posts">
+                        {% for popular in Article.get_all(status='published', category_id=category.id, limit=5) %}
+                        <li class="popular-post">
+                            <div class="popular-post-image">
+                                <a href="{{ url_for('main.article', slug=popular.slug) }}">
+                                    <img src="{{ popular.featured_image or url_for('static', filename='images/placeholder.svg') }}" alt="{{ popular.title }}">
+                                </a>
+                            </div>
+                            <div class="popular-post-content">
+                                <h4 class="popular-post-title">
+                                    <a href="{{ url_for('main.article', slug=popular.slug) }}">{{ popular.title }}</a>
+                                </h4>
+                                <span class="popular-post-date">{{ popular.published_at.strftime('%b %d, %Y') }}</span>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                
+                <!-- Tags Cloud -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Tags</h3>
+                    <div class="tags-cloud">
+                        {% set all_tags = [] %}
+                        {% for a in Article.get_all(status='published', category_id=category.id) %}
+                            {% for tag in a.tags %}
+                                {% if tag not in all_tags %}
+                                    {% do all_tags.append(tag) %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                        
+                        {% for tag in all_tags %}
+                            <a href="{{ url_for('main.tag', tag=tag) }}" class="tag">{{ tag }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

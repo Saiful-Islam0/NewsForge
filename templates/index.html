@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ settings.site_name|default('NewsPublisher') }} - {{ settings.site_description|default('Your source for the latest news and information') }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Featured Articles Section -->
+    {% if featured_articles %}
+    <section class="featured-articles">
+        <h2 class="section-title">Featured Stories</h2>
+        
+        <div class="featured-container">
+            <!-- Main Featured Article -->
+            {% if featured_articles|length > 0 %}
+            <div class="featured-main">
+                <img src="{{ featured_articles[0].featured_image or url_for('static', filename='images/placeholder.svg') }}" alt="{{ featured_articles[0].title }}">
+                <div class="featured-main-content">
+                    <span class="article-category">
+                        {% set category = Category.get_by_id(featured_articles[0].category_id) %}
+                        {% if category %}
+                            <a href="{{ url_for('main.category', slug=category.slug) }}">{{ category.name }}</a>
+                        {% endif %}
+                    </span>
+                    <h2 class="featured-main-title">
+                        <a href="{{ url_for('main.article', slug=featured_articles[0].slug) }}">{{ featured_articles[0].title }}</a>
+                    </h2>
+                    <div class="article-meta">
+                        <span class="article-date">{{ featured_articles[0].published_at.strftime('%B %d, %Y') }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Secondary Featured Articles -->
+            {% if featured_articles|length > 1 %}
+            <div class="featured-row">
+                {% for article in featured_articles[1:5] %}
+                <div class="featured-item">
+                    <img src="{{ article.featured_image or url_for('static', filename='images/placeholder.svg') }}" alt="{{ article.title }}">
+                    <div class="featured-item-content">
+                        <h3 class="featured-item-title">
+                            <a href="{{ url_for('main.article', slug=article.slug) }}">{{ article.title }}</a>
+                        </h3>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+    
+    <!-- Latest Articles Section -->
+    <section class="latest-articles">
+        <h2 class="section-title">Latest Articles</h2>
+        
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Articles Grid or List based on layout setting -->
+                {% if layout == 'grid' %}
+                <div class="articles-grid">
+                    {% for article in latest_articles %}
+                    <div class="article-card">
+                        <div class="article-image">
+                            <a href="{{ url_for('main.article', slug=article.slug) }}">
+                                <img src="{{ article.featured_image or url_for('static', filename='images/placeholder.svg') }}" alt="{{ article.title }}">
+                            </a>
+                        </div>
+                        <div class="article-content">
+                            <div class="article-meta">
+                                {% set category = Category.get_by_id(article.category_id) %}
+                                {% if category %}
+                                <span class="article-category">
+                                    <a href="{{ url_for('main.category', slug=category.slug) }}">{{ category.name }}</a>
+                                </span>
+                                {% endif %}
+                                <span class="article-date">{{ article.published_at.strftime('%b %d, %Y') }}</span>
+                            </div>
+                            <h3 class="article-title">
+                                <a href="{{ url_for('main.article', slug=article.slug) }}">{{ article.title }}</a>
+                            </h3>
+                            <div class="article-excerpt">
+                                {{ article.content|striptags|truncate(150) }}
+                            </div>
+                            <a href="{{ url_for('main.article', slug=article.slug) }}" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% elif layout == 'list' %}
+                <div class="articles-list">
+                    {% for article in latest_articles %}
+                    <div class="list-article">
+                        <div class="list-article-image">
+                            <a href="{{ url_for('main.article', slug=article.slug) }}">
+                                <img src="{{ article.featured_image or url_for('static', filename='images/placeholder.svg') }}" alt="{{ article.title }}">
+                            </a>
+                        </div>
+                        <div class="list-article-content">
+                            <div class="article-meta">
+                                {% set category = Category.get_by_id(article.category_id) %}
+                                {% if category %}
+                                <span class="article-category">
+                                    <a href="{{ url_for('main.category', slug=category.slug) }}">{{ category.name }}</a>
+                                </span>
+                                {% endif %}
+                                <span class="article-date">{{ article.published_at.strftime('%b %d, %Y') }}</span>
+                            </div>
+                            <h3 class="list-article-title">
+                                <a href="{{ url_for('main.article', slug=article.slug) }}">{{ article.title }}</a>
+                            </h3>
+                            <div class="article-excerpt">
+                                {{ article.content|striptags|truncate(200) }}
+                            </div>
+                            <a href="{{ url_for('main.article', slug=article.slug) }}" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <!-- Magazine Layout -->
+                <div class="magazine-layout">
+                    <div class="row">
+                        {% for article in latest_articles %}
+                        <div class="col-md-6 mb-4">
+                            <div class="article-card">
+                                <div class="article-image">
+                                    <a href="{{ url_for('main.article', slug=article.slug) }}">
+                                        <img src="{{ article.featured_image or url_for('static', filename='images/placeholder.svg') }}" alt="{{ article.title }}">
+                                    </a>
+                                </div>
+                                <div class="article-content">
+                                    <div class="article-meta">
+                                        {% set category = Category.get_by_id(article.category_id) %}
+                                        {% if category %}
+                                        <span class="article-category">
+                                            <a href="{{ url_for('main.category', slug=category.slug) }}">{{ category.name }}</a>
+                                        </span>
+                                        {% endif %}
+                                        <span class="article-date">{{ article.published_at.strftime('%b %d, %Y') }}</span>
+                                    </div>
+                                    <h3 class="article-title">
+                                        <a href="{{ url_for('main.article', slug=article.slug) }}">{{ article.title }}</a>
+                                    </h3>
+                                    <div class="article-excerpt">
+                                        {{ article.content|striptags|truncate(100) }}
+                                    </div>
+                                    <a href="{{ url_for('main.article', slug=article.slug) }}" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- View More Link -->
+                <div class="text-center mt-4 mb-5">
+                    <a href="#" class="btn btn-outline">View More Articles</a>
+                </div>
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <div class="sidebar">
+                    <!-- Categories Section -->
+                    <div class="sidebar-section">
+                        <h3 class="sidebar-title">Categories</h3>
+                        <ul class="sidebar-categories">
+                            {% for category in categories %}
+                            <li>
+                                <a href="{{ url_for('main.category', slug=category.slug) }}">
+                                    {{ category.name }}
+                                    <span class="category-count">
+                                        {{ Article.get_all(status='published', category_id=category.id)|length }}
+                                    </span>
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    
+                    <!-- Popular Articles Section -->
+                    <div class="sidebar-section">
+                        <h3 class="sidebar-title">Popular Articles</h3>
+                        <ul class="popular-posts">
+                            {% for article in latest_articles[:5] %}
+                            <li class="popular-post">
+                                <div class="popular-post-image">
+                                    <a href="{{ url_for('main.article', slug=article.slug) }}">
+                                        <img src="{{ article.featured_image or url_for('static', filename='images/placeholder.svg') }}" alt="{{ article.title }}">
+                                    </a>
+                                </div>
+                                <div class="popular-post-content">
+                                    <h4 class="popular-post-title">
+                                        <a href="{{ url_for('main.article', slug=article.slug) }}">{{ article.title }}</a>
+                                    </h4>
+                                    <span class="popular-post-date">{{ article.published_at.strftime('%b %d, %Y') }}</span>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    
+                    <!-- Tags Cloud -->
+                    <div class="sidebar-section">
+                        <h3 class="sidebar-title">Tags</h3>
+                        <div class="tags-cloud">
+                            {% set all_tags = [] %}
+                            {% for article in latest_articles %}
+                                {% for tag in article.tags %}
+                                    {% if tag not in all_tags %}
+                                        {% do all_tags.append(tag) %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                            
+                            {% for tag in all_tags %}
+                                <a href="{{ url_for('main.tag', tag=tag) }}" class="tag">{{ tag }}</a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

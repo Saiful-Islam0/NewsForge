@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results: {{ query }} | {{ settings.site_name|default('NewsPublisher') }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Search Header -->
+            <header class="search-header">
+                <h1 class="search-title">Search Results: "{{ query }}"</h1>
+                <div class="search-count">{{ articles|length }} results found</div>
+            </header>
+            
+            <!-- Search Form -->
+            <div class="search-form-large mb-4">
+                <form action="{{ url_for('main.search') }}" method="get">
+                    <div class="input-group">
+                        <input type="text" name="query" class="form-control" placeholder="Search..." value="{{ query }}">
+                        <button type="submit" class="btn btn-accent">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Search Results -->
+            {% if articles %}
+                <div class="articles-list">
+                    {% for article in articles %}
+                    <div class="list-article">
+                        <div class="list-article-image">
+                            <a href="{{ url_for('main.article', slug=article.slug) }}">
+                                <img src="{{ article.featured_image or url_for('static', filename='images/placeholder.svg') }}" alt="{{ article.title }}">
+                            </a>
+                        </div>
+                        <div class="list-article-content">
+                            <div class="article-meta">
+                                {% set category = Category.get_by_id(article.category_id) %}
+                                {% if category %}
+                                <span class="article-category">
+                                    <a href="{{ url_for('main.category', slug=category.slug) }}">{{ category.name }}</a>
+                                </span>
+                                {% endif %}
+                                <span class="article-date">{{ article.published_at.strftime('%B %d, %Y') }}</span>
+                            </div>
+                            <h3 class="list-article-title">
+                                <a href="{{ url_for('main.article', slug=article.slug) }}">{{ article.title }}</a>
+                            </h3>
+                            <div class="article-excerpt">
+                                <!-- Highlight matching text -->
+                                {% set excerpt = article.content|striptags %}
+                                {% set query_pos = excerpt.lower().find(query.lower()) %}
+                                {% if query_pos >= 0 %}
+                                    {% set start = [query_pos - 50, 0]|max %}
+                                    {% set end = [query_pos + 150, excerpt|length]|min %}
+                                    {% set highlight_excerpt = excerpt[start:end] %}
+                                    
+                                    {% if start > 0 %}...{% endif %}
+                                    {{ highlight_excerpt|replace(query, '<span class="highlight">' + query + '</span>')|safe }}
+                                    {% if end < excerpt|length %}...{% endif %}
+                                {% else %}
+                                    {{ excerpt|truncate(200) }}
+                                {% endif %}
+                            </div>
+                            <a href="{{ url_for('main.article', slug=article.slug) }}" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if total_pages > 1 %}
+                <div class="pagination">
+                    {% if page > 1 %}
+                    <a href="{{ url_for('main.search', query=query, page=page-1) }}">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </a>
+                    {% else %}
+                    <span class="disabled"><i class="fas fa-chevron-left"></i> Previous</span>
+                    {% endif %}
+                    
+                    {% for p in range(1, total_pages + 1) %}
+                    {% if p == page %}
+                    <span class="active">{{ p }}</span>
+                    {% else %}
+                    <a href="{{ url_for('main.search', query=query, page=p) }}">{{ p }}</a>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if page < total_pages %}
+                    <a href="{{ url_for('main.search', query=query, page=page+1) }}">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </a>
+                    {% else %}
+                    <span class="disabled">Next <i class="fas fa-chevron-right"></i></span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="no-results">
+                    <p>No results found for "{{ query }}".</p>
+                    <div class="search-suggestions">
+                        <h3>Suggestions:</h3>
+                        <ul>
+                            <li>Check your spelling.</li>
+                            <li>Try more general keywords.</li>
+                            <li>Try different keywords.</li>
+                            <li>Browse our <a href="{{ url_for('main.index') }}">homepage</a> instead.</li>
+                        </ul>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="sidebar">
+                <!-- Categories Section -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Categories</h3>
+                    <ul class="sidebar-categories">
+                        {% for category in categories %}
+                        <li>
+                            <a href="{{ url_for('main.category', slug=category.slug) }}">
+                                {{ category.name }}
+                                <span class="category-count">
+                                    {{ Article.get_all(status='published', category_id=category.id)|length }}
+                                </span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                
+                <!-- Popular Searches -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Popular Searches</h3>
+                    <ul class="popular-searches">
+                        <!-- This would ideally come from actual search data -->
+                        <li><a href="{{ url_for('main.search', query='news') }}">news</a></li>
+                        <li><a href="{{ url_for('main.search', query='technology') }}">technology</a></li>
+                        <li><a href="{{ url_for('main.search', query='politics') }}">politics</a></li>
+                        <li><a href="{{ url_for('main.search', query='sports') }}">sports</a></li>
+                        <li><a href="{{ url_for('main.search', query='entertainment') }}">entertainment</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Recent Articles -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Recent Articles</h3>
+                    <ul class="popular-posts">
+                        {% for recent in Article.get_all(status='published', limit=5) %}
+                        <li class="popular-post">
+                            <div class="popular-post-image">
+                                <a href="{{ url_for('main.article', slug=recent.slug) }}">
+                                    <img src="{{ recent.featured_image or url_for('static', filename='images/placeholder.svg') }}" alt="{{ recent.title }}">
+                                </a>
+                            </div>
+                            <div class="popular-post-content">
+                                <h4 class="popular-post-title">
+                                    <a href="{{ url_for('main.article', slug=recent.slug) }}">{{ recent.title }}</a>
+                                </h4>
+                                <span class="popular-post-date">{{ recent.published_at.strftime('%b %d, %Y') }}</span>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .highlight {
+        background-color: #fff3cd;
+        padding: 0 2px;
+        font-weight: bold;
+    }
+    
+    .search-form-large {
+        margin-bottom: 2rem;
+    }
+    
+    .popular-searches {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .popular-searches li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .popular-searches a {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        background-color: var(--light-gray);
+        border-radius: var(--border-radius);
+        color: var(--dark-gray);
+        text-decoration: none;
+    }
+    
+    .popular-searches a:hover {
+        background-color: var(--medium-gray);
+        color: var(--white);
+    }
+</style>
+{% endblock %}

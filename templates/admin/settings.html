@@ -1,0 +1,428 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Site Settings | Admin | {{ settings.site_name|default('NewsPublisher') }}{% endblock %}
+
+{% block admin_title %}Site Settings{% endblock %}
+
+{% block content %}
+<div class="admin-settings">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="admin-card">
+                <form method="post">
+                    {{ form.csrf_token }}
+                    
+                    <!-- Site Information -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">General Information</h3>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="site_name">Site Name</label>
+                                    {{ form.site_name(class="form-control") }}
+                                    {% if form.site_name.errors %}
+                                        <div class="form-error">
+                                            {% for error in form.site_name.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="contact_email">Contact Email</label>
+                                    {{ form.contact_email(class="form-control") }}
+                                    {% if form.contact_email.errors %}
+                                        <div class="form-error">
+                                            {% for error in form.contact_email.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="site_description">Site Description</label>
+                            {{ form.site_description(class="form-control", rows="3") }}
+                            <small class="form-text text-muted">Brief description of your site (shown in search results and site footer).</small>
+                            {% if form.site_description.errors %}
+                                <div class="form-error">
+                                    {% for error in form.site_description.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Appearance & Theme -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">Appearance & Theme</h3>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="logo_url">Logo URL</label>
+                                    {{ form.logo_url(class="form-control") }}
+                                    <small class="form-text text-muted">Full URL to your site logo image.</small>
+                                    {% if form.logo_url.errors %}
+                                        <div class="form-error">
+                                            {% for error in form.logo_url.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="favicon_url">Favicon URL</label>
+                                    {{ form.favicon_url(class="form-control") }}
+                                    <small class="form-text text-muted">Full URL to your site favicon.</small>
+                                    {% if form.favicon_url.errors %}
+                                        <div class="form-error">
+                                            {% for error in form.favicon_url.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="home_layout">Home Layout</label>
+                                    {{ form.home_layout(class="form-select") }}
+                                    <small class="form-text text-muted">Layout style for the homepage article display.</small>
+                                    {% if form.home_layout.errors %}
+                                        <div class="form-error">
+                                            {% for error in form.home_layout.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="articles_per_page">Articles Per Page</label>
+                                    {{ form.articles_per_page(class="form-control") }}
+                                    <small class="form-text text-muted">Number of articles to display per page in listings.</small>
+                                    {% if form.articles_per_page.errors %}
+                                        <div class="form-error">
+                                            {% for error in form.articles_per_page.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h4 class="mb-3 mt-4">Color Scheme</h4>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group mb-3 color-setting">
+                                    <label for="primary_color">Primary Color</label>
+                                    <div class="input-group">
+                                        <div class="color-preview" style="width: 35px; height: 35px; border-radius: 4px; margin-right: 10px;"></div>
+                                        {{ form.primary_color(class="form-control") }}
+                                    </div>
+                                    <small class="form-text text-muted">Used for header background.</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-group mb-3 color-setting">
+                                    <label for="secondary_color">Secondary Color</label>
+                                    <div class="input-group">
+                                        <div class="color-preview" style="width: 35px; height: 35px; border-radius: 4px; margin-right: 10px;"></div>
+                                        {{ form.secondary_color(class="form-control") }}
+                                    </div>
+                                    <small class="form-text text-muted">Used for page background.</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-group mb-3 color-setting">
+                                    <label for="accent_color">Accent Color</label>
+                                    <div class="input-group">
+                                        <div class="color-preview" style="width: 35px; height: 35px; border-radius: 4px; margin-right: 10px;"></div>
+                                        {{ form.accent_color(class="form-control") }}
+                                    </div>
+                                    <small class="form-text text-muted">Used for buttons and highlights.</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3 color-setting">
+                                    <label for="text_color">Text Color</label>
+                                    <div class="input-group">
+                                        <div class="color-preview" style="width: 35px; height: 35px; border-radius: 4px; margin-right: 10px;"></div>
+                                        {{ form.text_color(class="form-control") }}
+                                    </div>
+                                    <small class="form-text text-muted">Main text color.</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group mb-3 color-setting">
+                                    <label for="link_color">Link Color</label>
+                                    <div class="input-group">
+                                        <div class="color-preview" style="width: 35px; height: 35px; border-radius: 4px; margin-right: 10px;"></div>
+                                        {{ form.link_color(class="form-control") }}
+                                    </div>
+                                    <small class="form-text text-muted">Color for hyperlinks.</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="custom_css">Custom CSS</label>
+                            {{ form.custom_css(class="form-control", rows="6") }}
+                            <small class="form-text text-muted">Add custom CSS to further customize your site's appearance.</small>
+                            {% if form.custom_css.errors %}
+                                <div class="form-error">
+                                    {% for error in form.custom_css.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Commenting System -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">Comment Settings</h3>
+                        
+                        <div class="form-check mb-3">
+                            {{ form.comments_enabled(class="form-check-input") }}
+                            <label class="form-check-label" for="comments_enabled">
+                                Enable Comments
+                            </label>
+                            <div class="form-text text-muted">Allow visitors to leave comments on articles.</div>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            {{ form.comments_moderation(class="form-check-input") }}
+                            <label class="form-check-label" for="comments_moderation">
+                                Moderate Comments
+                            </label>
+                            <div class="form-text text-muted">Comments require approval before they are published.</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Social Media -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">Social Media Links</h3>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="facebook_url">
+                                        <i class="fab fa-facebook"></i> Facebook URL
+                                    </label>
+                                    {{ form.facebook_url(class="form-control", placeholder="https://facebook.com/yourpage") }}
+                                    {% if form.facebook_url.errors %}
+                                        <div class="form-error">
+                                            {% for error in form.facebook_url.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="twitter_url">
+                                        <i class="fab fa-twitter"></i> Twitter URL
+                                    </label>
+                                    {{ form.twitter_url(class="form-control", placeholder="https://twitter.com/youraccount") }}
+                                    {% if form.twitter_url.errors %}
+                                        <div class="form-error">
+                                            {% for error in form.twitter_url.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="instagram_url">
+                                        <i class="fab fa-instagram"></i> Instagram URL
+                                    </label>
+                                    {{ form.instagram_url(class="form-control", placeholder="https://instagram.com/youraccount") }}
+                                    {% if form.instagram_url.errors %}
+                                        <div class="form-error">
+                                            {% for error in form.instagram_url.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="linkedin_url">
+                                        <i class="fab fa-linkedin"></i> LinkedIn URL
+                                    </label>
+                                    {{ form.linkedin_url(class="form-control", placeholder="https://linkedin.com/company/yourcompany") }}
+                                    {% if form.linkedin_url.errors %}
+                                        <div class="form-error">
+                                            {% for error in form.linkedin_url.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Code Injection -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">Advanced Settings</h3>
+                        
+                        <div class="form-group mb-3">
+                            <label for="analytics_code">Analytics Code</label>
+                            {{ form.analytics_code(class="form-control", rows="4") }}
+                            <small class="form-text text-muted">Add Google Analytics or other tracking code here.</small>
+                            {% if form.analytics_code.errors %}
+                                <div class="form-error">
+                                    {% for error in form.analytics_code.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="header_scripts">Header Scripts</label>
+                            {{ form.header_scripts(class="form-control", rows="4") }}
+                            <small class="form-text text-muted">Add custom scripts to be included in the &lt;head&gt; section.</small>
+                            {% if form.header_scripts.errors %}
+                                <div class="form-error">
+                                    {% for error in form.header_scripts.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="footer_scripts">Footer Scripts</label>
+                            {{ form.footer_scripts(class="form-control", rows="4") }}
+                            <small class="form-text text-muted">Add custom scripts to be included at the end of the page.</small>
+                            {% if form.footer_scripts.errors %}
+                                <div class="form-error">
+                                    {% for error in form.footer_scripts.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="form-actions text-center mt-4">
+                        {{ form.submit(class="btn btn-primary btn-lg px-5") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .settings-section {
+        margin-bottom: 2.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .settings-section:last-child {
+        border-bottom: none;
+    }
+    
+    .settings-section-title {
+        margin-bottom: 1.5rem;
+        color: var(--accent-color);
+    }
+    
+    .color-setting .input-group {
+        display: flex;
+        align-items: center;
+    }
+    
+    .color-preview {
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize color previews
+        const colorInputs = document.querySelectorAll('.color-setting input');
+        
+        colorInputs.forEach(input => {
+            const preview = input.previousElementSibling;
+            
+            // Set initial color
+            preview.style.backgroundColor = input.value;
+            
+            // Update on change
+            input.addEventListener('input', function() {
+                preview.style.backgroundColor = this.value;
+            });
+        });
+        
+        // Preview button for custom CSS
+        const customCssInput = document.getElementById('custom_css');
+        if (customCssInput) {
+            const previewBtn = document.createElement('button');
+            previewBtn.type = 'button';
+            previewBtn.className = 'btn btn-sm btn-outline-primary mt-2';
+            previewBtn.textContent = 'Preview CSS';
+            
+            previewBtn.addEventListener('click', function() {
+                const css = customCssInput.value;
+                
+                // Create a style element to preview the CSS
+                let styleEl = document.getElementById('custom-css-preview');
+                if (!styleEl) {
+                    styleEl = document.createElement('style');
+                    styleEl.id = 'custom-css-preview';
+                    document.head.appendChild(styleEl);
+                }
+                
+                styleEl.textContent = css;
+                
+                alert('Custom CSS preview applied. Look at the page to see your changes.');
+            });
+            
+            customCssInput.parentNode.appendChild(previewBtn);
+        }
+    });
+</script>
+{% endblock %}

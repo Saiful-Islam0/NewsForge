@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin | {{ settings.site_name|default('NewsPublisher') }}{% endblock %}</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- TinyMCE -->
+    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Admin-specific styles -->
+    <style>
+        .admin-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .admin-sidebar {
+            width: 250px;
+            background-color: var(--primary-color);
+            color: var(--white);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+        
+        .admin-main {
+            flex: 1;
+            margin-left: 250px;
+            padding: var(--spacing-lg);
+            background-color: var(--secondary-color);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+        
+        @media (max-width: 992px) {
+            .admin-sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .admin-sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .admin-main {
+                margin-left: 0;
+            }
+            
+            body.sidebar-open {
+                overflow: hidden;
+            }
+            
+            body.sidebar-open::before {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 90;
+            }
+        }
+        
+        .sidebar-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--white);
+            font-size: 1.5rem;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 110;
+        }
+        
+        @media (max-width: 992px) {
+            .sidebar-toggle {
+                display: block;
+            }
+        }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="admin-wrapper">
+        <!-- Mobile Sidebar Toggle -->
+        <button class="sidebar-toggle">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <!-- Sidebar -->
+        <div class="admin-sidebar">
+            <div class="admin-logo">
+                <a href="{{ url_for('admin.dashboard') }}">
+                    {{ settings.site_name|default('NewsPublisher') }} Admin
+                </a>
+            </div>
+            
+            <nav class="admin-nav">
+                <ul>
+                    <li>
+                        <a href="{{ url_for('admin.dashboard') }}" {% if request.endpoint == 'admin.dashboard' %}class="active"{% endif %}>
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    
+                    <!-- Articles Management -->
+                    <li>
+                        <a href="{{ url_for('admin.articles') }}" {% if request.endpoint == 'admin.articles' or request.endpoint == 'admin.new_article' or request.endpoint == 'admin.edit_article' %}class="active"{% endif %}>
+                            <i class="fas fa-newspaper"></i> Articles
+                        </a>
+                    </li>
+                    
+                    <!-- Categories Management (Admin & Editor only) -->
+                    {% if current_user.role in ['admin', 'editor'] %}
+                    <li>
+                        <a href="{{ url_for('admin.categories') }}" {% if request.endpoint == 'admin.categories' or request.endpoint == 'admin.new_category' or request.endpoint == 'admin.edit_category' %}class="active"{% endif %}>
+                            <i class="fas fa-folder"></i> Categories
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Comments Management (Admin & Editor only) -->
+                    {% if current_user.role in ['admin', 'editor'] %}
+                    <li>
+                        <a href="{{ url_for('admin.comments') }}" {% if request.endpoint == 'admin.comments' %}class="active"{% endif %}>
+                            <i class="fas fa-comments"></i> Comments
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Media Library -->
+                    <li>
+                        <a href="{{ url_for('admin.media') }}" {% if request.endpoint == 'admin.media' %}class="active"{% endif %}>
+                            <i class="fas fa-images"></i> Media
+                        </a>
+                    </li>
+                    
+                    <div class="nav-divider"></div>
+                    
+                    <!-- Users Management (Admin only) -->
+                    {% if current_user.role == 'admin' %}
+                    <li>
+                        <a href="{{ url_for('admin.users') }}" {% if request.endpoint == 'admin.users' or request.endpoint == 'admin.new_user' or request.endpoint == 'admin.edit_user' %}class="active"{% endif %}>
+                            <i class="fas fa-users"></i> Users
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Site Settings (Admin only) -->
+                    {% if current_user.role == 'admin' %}
+                    <li>
+                        <a href="{{ url_for('admin.settings') }}" {% if request.endpoint == 'admin.settings' %}class="active"{% endif %}>
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <div class="nav-divider"></div>
+                    
+                    <!-- User Actions -->
+                    <li>
+                        <a href="{{ url_for('admin.profile') }}" {% if request.endpoint == 'admin.profile' %}class="active"{% endif %}>
+                            <i class="fas fa-user-circle"></i> My Profile
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('main.index') }}">
+                            <i class="fas fa-globe"></i> View Site
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('auth.logout') }}">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="admin-main">
+            <!-- Admin Header -->
+            <div class="admin-header">
+                <h1 class="admin-title">{% block admin_title %}Admin Dashboard{% endblock %}</h1>
+                
+                <div class="admin-user-menu">
+                    <button class="admin-user-button dropdown-toggle">
+                        <div class="admin-user-avatar">
+                            {{ current_user.username[0].upper() }}
+                        </div>
+                        <span>{{ current_user.username }}</span>
+                    </button>
+                    
+                    <div class="admin-dropdown">
+                        <a href="{{ url_for('admin.profile') }}">
+                            <i class="fas fa-user-circle"></i> My Profile
+                        </a>
+                        <a href="{{ url_for('main.index') }}">
+                            <i class="fas fa-globe"></i> View Site
+                        </a>
+                        <a href="{{ url_for('auth.logout') }}">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Main Content Block -->
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Admin JS -->
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

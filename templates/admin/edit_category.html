@@ -1,0 +1,113 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}{{ 'Edit' if category else 'New' }} Category | Admin | {{ settings.site_name|default('NewsPublisher') }}{% endblock %}
+
+{% block admin_title %}{{ 'Edit Category' if category else 'New Category' }}{% endblock %}
+
+{% block content %}
+<div class="admin-edit-category">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="admin-card">
+                <form method="post">
+                    {{ form.csrf_token }}
+                    
+                    <div class="form-group mb-3">
+                        <label for="name">Category Name</label>
+                        {{ form.name(class="form-control", placeholder="Enter category name") }}
+                        {% if form.name.errors %}
+                            <div class="form-error">
+                                {% for error in form.name.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label for="slug">URL Slug</label>
+                        {{ form.slug(class="form-control", placeholder="category-url-slug") }}
+                        <small class="form-text text-muted">The URL-friendly version of the name. Leave blank to generate automatically.</small>
+                        {% if form.slug.errors %}
+                            <div class="form-error">
+                                {% for error in form.slug.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label for="description">Description</label>
+                        {{ form.description(class="form-control", rows="4", placeholder="Enter category description") }}
+                        {% if form.description.errors %}
+                            <div class="form-error">
+                                {% for error in form.description.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label for="parent_id">Parent Category (Optional)</label>
+                        {{ form.parent_id(class="form-select") }}
+                        <small class="form-text text-muted">Select a parent category to create a hierarchy.</small>
+                        {% if form.parent_id.errors %}
+                            <div class="form-error">
+                                {% for error in form.parent_id.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-actions mt-4">
+                        {{ form.submit(class="btn btn-primary") }}
+                        <a href="{{ url_for('admin.categories') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="admin-card">
+                <h4>Category Tips</h4>
+                <ul>
+                    <li>Use clear, descriptive category names</li>
+                    <li>Keep the hierarchy simple - not too many levels</li>
+                    <li>Add descriptions to help readers understand the type of content</li>
+                    <li>Consider SEO when naming categories</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle slug generation
+        const nameInput = document.getElementById('name');
+        const slugInput = document.getElementById('slug');
+        
+        if (nameInput && slugInput) {
+            nameInput.addEventListener('blur', function() {
+                // Only generate slug if it's empty
+                if (!slugInput.value) {
+                    const name = this.value;
+                    // Convert to lowercase, replace spaces with hyphens, remove special chars
+                    let slug = name.toLowerCase()
+                        .replace(/[^\w\s-]/g, '')  // Remove special characters
+                        .replace(/\s+/g, '-')      // Replace spaces with hyphens
+                        .replace(/-+/g, '-')       // Replace multiple hyphens with single hyphen
+                        .trim();                   // Trim whitespace from ends
+                    
+                    slugInput.value = slug;
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
