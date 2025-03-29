@@ -92,17 +92,14 @@
                         </li>
                     {% endif %}
                     
-                    <!-- User Menu -->
+                    <!-- User Menu - Only for public users -->
                     {% if current_user.is_authenticated %}
                         <li class="dropdown">
                             <a href="#">
                                 <i class="fas fa-user"></i> {{ current_user.username }} <i class="fas fa-chevron-down"></i>
                             </a>
                             <ul class="dropdown-menu">
-                                {% if current_user.role in ['admin', 'editor'] %}
-                                    <li><a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                                {% endif %}
-                                <li><a href="{{ url_for('admin.profile') }}"><i class="fas fa-user-circle"></i> Profile</a></li>
+                                <li><a href="{{ url_for('auth.profile') }}"><i class="fas fa-user-circle"></i> Profile</a></li>
                                 <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                             </ul>
                         </li>
@@ -163,7 +160,7 @@
                     <ul class="footer-links">
                         <li><a href="{{ url_for('main.index') }}">Home</a></li>
                         {% if current_user.is_authenticated %}
-                            <li><a href="{{ url_for('admin.profile') }}">Profile</a></li>
+                            <li><a href="{{ url_for('auth.profile') }}">Profile</a></li>
                             <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
                         {% else %}
                             <li><a href="{{ url_for('auth.login') }}">Login</a></li>

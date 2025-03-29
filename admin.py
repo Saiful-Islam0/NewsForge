@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, current_app
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, login_user, logout_user
 from models import User, Article, Category, Comment, Media, SiteSettings
-from forms import ArticleForm, CategoryForm, UserForm, SiteSettingsForm, MediaUploadForm
+from forms import ArticleForm, CategoryForm, UserForm, SiteSettingsForm, MediaUploadForm, LoginForm
 import datetime
 import os
 import uuid
@@ -12,11 +12,15 @@ admin = Blueprint('admin', __name__)
 # Admin middleware
 @admin.before_request
 def check_admin():
+    # Allow access to login route without authentication
+    if request.endpoint == 'admin.login':
+        return None
+        
     if not current_user.is_authenticated:
-        return redirect(url_for('auth.login', next=request.url))
+        return redirect(url_for('admin.login', next=request.url))
     
     # Only admin and editor roles can access admin panel
-    if current_user.role not in ['admin', 'editor'] and not request.path.endswith('/profile'):
+    if current_user.role not in ['admin', 'editor']:
         flash('You do not have permission to access the admin panel.', 'error')
         return redirect(url_for('main.index'))
 
@@ -554,6 +558,48 @@ def delete_user(id):
     
     flash('User deleted successfully!', 'success')
     return redirect(url_for('admin.users'))
+
+@admin.route('/login', methods=['GET', 'POST'])
+def login():
+    """Admin login page - separate from public user login"""
+    if current_user.is_authenticated and current_user.role in ['admin', 'editor']:
+        return redirect(url_for('admin.dashboard'))
+    
+    form = LoginForm()
+    
+    if form.validate_on_submit():
+        email = form.email.data
+        password = form.password.data
+        remember = form.remember.data
+        
+        user = User.get_by_email(email)
+        
+        if user and user.check_password(password) and user.role in ['admin', 'editor']:
+            login_user(user, remember=remember)
+            
+            # Update last login time if the attribute exists
+            if hasattr(user, 'last_login'):
+                user.last_login = datetime.datetime.now()
+                user.save()
+            
+            # Redirect to admin dashboard
+            next_page = request.args.get('next')
+            if next_page and next_page.startswith('/admin'):
+                return redirect(next_page)
+                
+            return redirect(url_for('admin.dashboard'))
+        else:
+            flash('Invalid email or password, or you do not have admin privileges.', 'error')
+    
+    return render_template('admin/login.html', form=form)
+
+@admin.route('/logout')
+@login_required
+def logout():
+    """Admin logout - redirects to admin login page"""
+    logout_user()
+    flash('You have been logged out from the admin panel.', 'success')
+    return redirect(url_for('admin.login'))
 
 @admin.route('/profile')
 @login_required

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | {{ settings.site_name|default('NewsPublisher') }}</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <style>
+        body {
+            background-color: var(--secondary-color, #f7f7f7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+        
+        .admin-login-container {
+            width: 100%;
+            max-width: 420px;
+            margin: 0 auto;
+        }
+        
+        .admin-login-logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .admin-login-logo h1 {
+            font-family: 'Merriweather', serif;
+            font-weight: 900;
+            color: var(--primary-color, #1a1a1a);
+            margin: 0;
+        }
+        
+        .admin-login-logo p {
+            font-family: 'Source Sans Pro', sans-serif;
+            color: var(--text-color, #2c2c2c);
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+        
+        .admin-login-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 2.5rem;
+        }
+        
+        .admin-login-card h2 {
+            font-family: 'Merriweather', serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--primary-color, #1a1a1a);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .form-control {
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            border: 1px solid #e2e2e2;
+        }
+        
+        .form-control:focus {
+            border-color: var(--accent-color, #d32f2f);
+            box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.2);
+        }
+        
+        .form-error {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        .admin-login-button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--accent-color, #d32f2f);
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .admin-login-button:hover {
+            background-color: #b92929;
+        }
+        
+        .admin-login-footer {
+            text-align: center;
+            margin-top: 2rem;
+            font-size: 0.875rem;
+            color: var(--text-color, #2c2c2c);
+            opacity: 0.7;
+        }
+        
+        .admin-login-footer a {
+            color: var(--accent-color, #d32f2f);
+            text-decoration: none;
+        }
+        
+        .admin-login-footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-login-container">
+        <!-- Logo and Site Name -->
+        <div class="admin-login-logo">
+            <h1>{{ settings.site_name|default('NewsPublisher') }}</h1>
+            <p>Admin Control Panel</p>
+        </div>
+        
+        <!-- Login Form Card -->
+        <div class="admin-login-card">
+            <h2>Administrator Login</h2>
+            
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="post" action="{{ url_for('admin.login') }}">
+                {{ form.csrf_token }}
+                
+                <div class="form-group">
+                    <label class="form-label" for="email">Email Address</label>
+                    {{ form.email(class="form-control", placeholder="Admin Email Address") }}
+                    {% if form.email.errors %}
+                        <div class="form-error">
+                            {% for error in form.email.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    {{ form.password(class="form-control", placeholder="Admin Password") }}
+                    {% if form.password.errors %}
+                        <div class="form-error">
+                            {% for error in form.password.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-check mb-3">
+                    {{ form.remember(class="form-check-input") }}
+                    <label class="form-check-label" for="remember">
+                        Remember Me
+                    </label>
+                </div>
+                
+                <button type="submit" class="admin-login-button">
+                    <i class="fas fa-sign-in-alt me-2"></i> Login
+                </button>
+            </form>
+        </div>
+        
+        <!-- Footer -->
+        <div class="admin-login-footer">
+            <p>Return to <a href="{{ url_for('main.index') }}">site front page</a></p>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

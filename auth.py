@@ -128,4 +128,26 @@ def register():
 @auth.route('/profile')
 @login_required
 def profile():
-    return redirect(url_for('admin.profile'))
+    """User profile page for public portal users"""
+    # Import required data for template
+    from models import SiteSettings, Category, Article, Comment
+    from forms import SearchForm
+    
+    settings = SiteSettings.get_all()
+    search_form = SearchForm()
+    categories = Category.get_all()
+    
+    # Get user's comments if any
+    user_comments = []
+    if current_user.is_authenticated:
+        # This would ideally retrieve the user's comments
+        # For now, we'll leave it as a placeholder
+        pass
+    
+    return render_template('auth/profile.html', 
+                          settings=settings,
+                          Category=Category,
+                          Article=Article,
+                          search_form=search_form,
+                          categories=categories,
+                          user_comments=user_comments)

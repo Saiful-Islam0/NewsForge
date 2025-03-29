@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile | {{ settings.site_name|default('NewsPublisher') }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card user-profile-card mb-4">
+                <div class="card-body text-center">
+                    <div class="user-avatar mb-3">
+                        <div class="avatar-placeholder">
+                            <i class="fas fa-user-circle fa-5x"></i>
+                        </div>
+                    </div>
+                    <h3 class="user-name">{{ current_user.username }}</h3>
+                    <p class="user-role">Community Member</p>
+                    <p class="user-joined">
+                        <small>Joined: {{ current_user.created_at.strftime('%B %d, %Y') }}</small>
+                    </p>
+                </div>
+            </div>
+            
+            <div class="card user-profile-nav mb-4">
+                <div class="list-group list-group-flush">
+                    <a href="#profile-info" class="list-group-item list-group-item-action active">
+                        <i class="fas fa-user me-2"></i> My Profile
+                    </a>
+                    <a href="#comments" class="list-group-item list-group-item-action">
+                        <i class="fas fa-comments me-2"></i> My Comments
+                    </a>
+                    <a href="#preferences" class="list-group-item list-group-item-action">
+                        <i class="fas fa-cog me-2"></i> Preferences
+                    </a>
+                    <a href="{{ url_for('auth.logout') }}" class="list-group-item list-group-item-action text-danger">
+                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <section id="profile-info" class="profile-section card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Profile Information</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Username:</div>
+                        <div class="col-md-8">{{ current_user.username }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Email:</div>
+                        <div class="col-md-8">{{ current_user.email }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Member Since:</div>
+                        <div class="col-md-8">{{ current_user.created_at.strftime('%B %d, %Y') }}</div>
+                    </div>
+                    {% if current_user.last_login %}
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Last Login:</div>
+                        <div class="col-md-8">{{ current_user.last_login.strftime('%B %d, %Y at %H:%M') }}</div>
+                    </div>
+                    {% endif %}
+                    <button class="btn btn-outline-primary mt-3">
+                        <i class="fas fa-edit me-2"></i> Edit Profile
+                    </button>
+                </div>
+            </section>
+            
+            <section id="comments" class="profile-section card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">My Comments</h3>
+                </div>
+                <div class="card-body">
+                    {% if user_comments %}
+                        <div class="comments-list">
+                            {% for comment in user_comments %}
+                            <div class="comment-item">
+                                <div class="comment-content">
+                                    <p>{{ comment.content }}</p>
+                                </div>
+                                <div class="comment-meta">
+                                    <small>
+                                        On article: 
+                                        <a href="{{ url_for('main.article', slug=comment.article.slug) }}">
+                                            {{ comment.article.title }}
+                                        </a>
+                                        | {{ comment.created_at.strftime('%B %d, %Y') }}
+                                    </small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-comments fa-3x text-muted"></i>
+                            </div>
+                            <p class="empty-state-text">You haven't made any comments yet.</p>
+                            <p class="empty-state-help">When you comment on articles, they will appear here.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </section>
+            
+            <section id="preferences" class="profile-section card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Preferences</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="notification-comments" checked>
+                        <label class="form-check-label" for="notification-comments">
+                            Email me when someone replies to my comments
+                        </label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="notification-newsletter" checked>
+                        <label class="form-check-label" for="notification-newsletter">
+                            Subscribe to newsletter
+                        </label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="dark-mode">
+                        <label class="form-check-label" for="dark-mode">
+                            Dark Mode (Beta)
+                        </label>
+                    </div>
+                    <button class="btn btn-outline-primary mt-3">
+                        <i class="fas fa-save me-2"></i> Save Preferences
+                    </button>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .user-profile-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .user-avatar {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto;
+        border-radius: 50%;
+        overflow: hidden;
+        background-color: var(--light-gray);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--medium-gray);
+    }
+    
+    .avatar-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+    }
+    
+    .user-name {
+        margin-top: 1rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .user-role {
+        color: var(--medium-gray);
+        margin-bottom: 0.5rem;
+    }
+    
+    .user-joined {
+        color: var(--medium-gray);
+    }
+    
+    .profile-section {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-header {
+        background-color: var(--light-gray);
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .comments-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .comment-item {
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .comment-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    
+    .comment-meta {
+        color: var(--medium-gray);
+        font-size: 0.875rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 2rem 0;
+    }
+    
+    .empty-state-icon {
+        margin-bottom: 1rem;
+        color: var(--medium-gray);
+    }
+    
+    .empty-state-text {
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .empty-state-help {
+        color: var(--medium-gray);
+    }
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Handle tab navigation
+    document.addEventListener('DOMContentLoaded', function() {
+        const navLinks = document.querySelectorAll('.user-profile-nav .list-group-item');
+        
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.getAttribute('href').startsWith('#')) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all links
+                    navLinks.forEach(navLink => {
+                        navLink.classList.remove('active');
+                    });
+                    
+                    // Add active class to clicked link
+                    this.classList.add('active');
+                    
+                    // Scroll to section
+                    const targetId = this.getAttribute('href');
+                    const targetSection = document.querySelector(targetId);
+                    
+                    if (targetSection) {
+                        window.scrollTo({
+                            top: targetSection.offsetTop - 20,
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+            });
+        });
+        
+        // Dark mode toggle
+        const darkModeToggle = document.getElementById('dark-mode');
+        darkModeToggle.addEventListener('change', function() {
+            if (this.checked) {
+                document.body.classList.add('dark-mode');
+                localStorage.setItem('darkMode', 'enabled');
+            } else {
+                document.body.classList.remove('dark-mode');
+                localStorage.setItem('darkMode', 'disabled');
+            }
+        });
+        
+        // Check for saved dark mode preference
+        const darkMode = localStorage.getItem('darkMode');
+        if (darkMode === 'enabled') {
+            darkModeToggle.checked = true;
+            document.body.classList.add('dark-mode');
+        }
+    });
+</script>
+{% endblock %}
