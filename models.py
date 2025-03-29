@@ -299,6 +299,24 @@ class Comment:
             results = results[:limit]
         
         return results
+    
+    @staticmethod
+    def get_all(approved_only=False, limit=None, offset=0):
+        results = _comments.copy()
+        
+        if approved_only:
+            results = [c for c in results if c.approved]
+        
+        # Sort by date (newest first)
+        results.sort(key=lambda x: x.created_at, reverse=True)
+        
+        # Apply pagination
+        if offset:
+            results = results[offset:]
+        if limit:
+            results = results[:limit]
+        
+        return results
 
 class Media:
     def __init__(self, id=None, filename=None, url=None, mime_type=None, 
