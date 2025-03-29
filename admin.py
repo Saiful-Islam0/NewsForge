@@ -12,7 +12,14 @@ admin = Blueprint('admin', __name__)
 # Add settings to all admin templates
 @admin.context_processor
 def inject_settings():
-    return {'settings': SiteSettings.get_all()}
+    return {
+        'settings': SiteSettings.get_all(),
+        'Article': Article,
+        'Category': Category,
+        'User': User,
+        'Comment': Comment,
+        'Media': Media
+    }
 
 # Admin middleware
 @admin.before_request
