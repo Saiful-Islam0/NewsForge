@@ -9,6 +9,11 @@ from werkzeug.utils import secure_filename
 
 admin = Blueprint('admin', __name__)
 
+# Add settings to all admin templates
+@admin.context_processor
+def inject_settings():
+    return {'settings': SiteSettings.get_all()}
+
 # Admin middleware
 @admin.before_request
 def check_admin():
