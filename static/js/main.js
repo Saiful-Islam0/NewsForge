@@ -1,11 +1,62 @@
 document.addEventListener('DOMContentLoaded', function() {
-  // Mobile menu toggle
+  // Mobile menu toggle with animation
   const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
   const mainNav = document.querySelector('.main-nav');
   
   if (mobileMenuToggle && mainNav) {
     mobileMenuToggle.addEventListener('click', function() {
+      this.classList.toggle('active');
       mainNav.classList.toggle('active');
+      
+      // Handle the dropdown menus in mobile view
+      const dropdowns = document.querySelectorAll('.dropdown');
+      dropdowns.forEach(dropdown => {
+        const link = dropdown.querySelector('a');
+        const submenu = dropdown.querySelector('.dropdown-menu');
+        
+        if (!link.dataset.hasListener) {
+          link.addEventListener('click', function(e) {
+            // Only prevent default in mobile view
+            if (window.innerWidth <= 768) {
+              e.preventDefault();
+              dropdown.classList.toggle('active');
+              
+              // Create ripple effect
+              const rect = link.getBoundingClientRect();
+              const ripple = document.createElement('span');
+              ripple.className = 'ripple-effect';
+              ripple.style.left = `${e.clientX - rect.left}px`;
+              ripple.style.top = `${e.clientY - rect.top}px`;
+              link.appendChild(ripple);
+              
+              // Remove ripple after animation completes
+              setTimeout(() => ripple.remove(), 600);
+            }
+          });
+          link.dataset.hasListener = 'true';
+        }
+      });
+    });
+  }
+  
+  // Add subtle bounce animation to nav items on page load
+  const navItems = document.querySelectorAll('.main-nav > ul > li');
+  navItems.forEach((item, index) => {
+    setTimeout(() => {
+      item.style.animation = 'navItemBounce 0.5s forwards';
+    }, 100 * index);
+  });
+  
+  // Add hover animation for desktop navigation
+  if (window.innerWidth > 768) {
+    navItems.forEach(item => {
+      item.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-3px)';
+      });
+      
+      item.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0)';
+      });
     });
   }
   
