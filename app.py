@@ -41,21 +41,35 @@ app.register_blueprint(admin, url_prefix='/admin')
 def page_not_found(e):
     # Import here to avoid circular imports
     from models import SiteSettings, Category, Article
+    from forms import SearchForm
+    
     settings = SiteSettings.get_all()
+    search_form = SearchForm()
+    categories = Category.get_all()
+    
     return render_template('errors/404.html', 
                           settings=settings,
                           Category=Category,
-                          Article=Article), 404
+                          Article=Article,
+                          search_form=search_form,
+                          categories=categories), 404
 
 @app.errorhandler(500)
 def internal_server_error(e):
     # Import here to avoid circular imports
     from models import SiteSettings, Category, Article
+    from forms import SearchForm
+    
     settings = SiteSettings.get_all()
+    search_form = SearchForm()
+    categories = Category.get_all()
+    
     return render_template('errors/500.html', 
                           settings=settings,
                           Category=Category,
-                          Article=Article), 500
+                          Article=Article,
+                          search_form=search_form,
+                          categories=categories), 500
 
 # Import at the end to avoid circular imports
 from flask import render_template
