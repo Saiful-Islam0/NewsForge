@@ -591,7 +591,9 @@ def login():
         else:
             flash('Invalid email or password, or you do not have admin privileges.', 'error')
     
-    return render_template('admin/login.html', form=form)
+    # Get site settings to pass to the template
+    settings = SiteSettings.get_all()
+    return render_template('admin/login.html', form=form, settings=settings)
 
 @admin.route('/logout')
 @login_required
